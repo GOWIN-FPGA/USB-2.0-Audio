@@ -1,0 +1,267 @@
+<?xml version="1" encoding="UTF-8"?>
+<GAO_CONFIG>
+    <Version>3.0</Version>
+    <Mode>Standard</Mode>
+    <AoCore index="0" sample_clock="fclk" trig_type="0" storage_depth="1024" window_num="1" capture_amount="1024" implementation="0" trigger_pos="200" module_name="Top" force_trigger_by_falling_edge="false" capture_init_data_enabled="false">
+        <SignalList>
+            <Signal capture_enable="true">dop_en</Signal>
+            <Signal capture_enable="true">dsd_en</Signal>
+            <Bus capture_enable="true" name="audio_tx_pcm2dsd_inst/I_ADDR[0:0]">
+                <Signal>audio_tx_pcm2dsd_inst/I_ADDR[0]</Signal>
+            </Bus>
+            <Bus capture_enable="true" name="audio_tx_pcm2dsd_inst/I_DATA[31:0]">
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[31]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[30]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[29]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[28]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[27]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[26]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[25]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[24]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[23]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[22]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[21]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[20]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[19]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[18]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[17]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[16]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[15]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[14]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[13]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[12]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[11]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[10]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[9]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[8]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[7]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[6]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[5]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[4]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[3]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[2]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[1]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/I_DATA[0]</Signal>
+            </Bus>
+            <Signal capture_enable="true">audio_tx_pcm2dsd_inst/I_WINC</Signal>
+            <Bus capture_enable="true" name="audio_tx_pcm2dsd_inst/l_data_reg[31:0]">
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[31]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[30]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[29]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[28]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[27]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[26]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[25]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[24]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[23]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[22]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[21]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[20]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[19]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[18]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[17]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[16]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[15]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[14]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[13]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[12]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[11]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[10]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[9]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[8]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[7]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[6]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[5]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[4]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[3]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[2]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[1]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/l_data_reg[0]</Signal>
+            </Bus>
+            <Bus capture_enable="true" name="audio_tx_pcm2dsd_inst/r_data_reg[31:0]">
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[31]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[30]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[29]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[28]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[27]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[26]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[25]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[24]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[23]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[22]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[21]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[20]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[19]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[18]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[17]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[16]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[15]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[14]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[13]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[12]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[11]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[10]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[9]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[8]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[7]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[6]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[5]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[4]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[3]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[2]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[1]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/r_data_reg[0]</Signal>
+            </Bus>
+            <Signal capture_enable="true">audio_tx_pcm2dsd_inst/dsd_sync</Signal>
+            <Bus capture_enable="true" name="audio_tx_pcm2dsd_inst/dsd_bclk_div[7:0]">
+                <Signal>audio_tx_pcm2dsd_inst/dsd_bclk_div[7]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_bclk_div[6]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_bclk_div[5]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_bclk_div[4]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_bclk_div[3]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_bclk_div[2]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_bclk_div[1]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_bclk_div[0]</Signal>
+            </Bus>
+            <Bus capture_enable="true" name="audio_tx_pcm2dsd_inst/dsd_data_bits[7:0]">
+                <Signal>audio_tx_pcm2dsd_inst/dsd_data_bits[7]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_data_bits[6]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_data_bits[5]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_data_bits[4]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_data_bits[3]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_data_bits[2]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_data_bits[1]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_data_bits[0]</Signal>
+            </Bus>
+            <Bus capture_enable="true" name="audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[31:0]">
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[31]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[30]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[29]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[28]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[27]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[26]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[25]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[24]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[23]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[22]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[21]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[20]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[19]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[18]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[17]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[16]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[15]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[14]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[13]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[12]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[11]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[10]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[9]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[8]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[7]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[6]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[5]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[4]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[3]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[2]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[1]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/l_data_d1[0]</Signal>
+            </Bus>
+            <Signal capture_enable="true">audio_tx_pcm2dsd_inst/O_DSD_CLK</Signal>
+            <Signal capture_enable="true">audio_tx_pcm2dsd_inst/O_DSD_DATA1</Signal>
+            <Signal capture_enable="true">audio_tx_pcm2dsd_inst/O_DSD_DATA2</Signal>
+            <Bus capture_enable="true" name="audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[15:0]">
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[15]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[14]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[13]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[12]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[11]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[10]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[9]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[8]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[7]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[6]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[5]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[4]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[3]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[2]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[1]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/bclk_cnt[0]</Signal>
+            </Bus>
+            <Bus capture_enable="true" name="audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[15:0]">
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[15]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[14]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[13]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[12]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[11]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[10]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[9]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[8]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[7]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[6]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[5]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[4]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[3]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[2]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[1]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt[0]</Signal>
+            </Bus>
+            <Signal capture_enable="true">audio_tx_pcm2dsd_inst/dsd_inst/clk_cnt_max</Signal>
+            <Signal capture_enable="true">audio_tx_pcm2dsd_inst/dsd_inst/is_running</Signal>
+            <Bus capture_enable="true" name="audio_tx_pcm2dsd_inst/dsd_inst/s_bclk_div[7:0]">
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/s_bclk_div[7]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/s_bclk_div[6]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/s_bclk_div[5]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/s_bclk_div[4]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/s_bclk_div[3]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/s_bclk_div[2]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/s_bclk_div[1]</Signal>
+                <Signal>audio_tx_pcm2dsd_inst/dsd_inst/s_bclk_div[0]</Signal>
+            </Bus>
+        </SignalList>
+        <Triggers>
+            <Trigger index="0">
+                <SignalList>
+                    <Signal>o_winc</Signal>
+                </SignalList>
+            </Trigger>
+            <Trigger index="1"/>
+            <Trigger index="2"/>
+            <Trigger index="3"/>
+            <Trigger index="4"/>
+            <Trigger index="5"/>
+            <Trigger index="6"/>
+            <Trigger index="7"/>
+            <Trigger index="8"/>
+            <Trigger index="9"/>
+            <Trigger index="10"/>
+            <Trigger index="11"/>
+            <Trigger index="12"/>
+            <Trigger index="13"/>
+            <Trigger index="14"/>
+            <Trigger index="15"/>
+        </Triggers>
+        <MatchUnits>
+            <MatchUnit index="0" enabled="1" match_type="1" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="1" value1="0" trigger="0"/>
+            <MatchUnit index="1" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="2" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="3" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="4" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="5" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="6" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="7" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="8" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="9" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="10" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="11" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="12" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="13" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="14" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+            <MatchUnit index="15" enabled="0" match_type="0" counter_enable="0" counter_width="2" counter="2" countinuous="0" func="0" value0="" value1=""/>
+        </MatchUnits>
+        <Expressions type="Dynamic" ex_implementation="0">
+            <Expression>M0</Expression>
+        </Expressions>
+    </AoCore>
+    <GAO_ID>1110111011110010</GAO_ID>
+</GAO_CONFIG>

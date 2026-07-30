@@ -1,0 +1,55 @@
+<?xml version="1" encoding="UTF-8"?>
+<!DOCTYPE gowin-fpga-project>
+<Project>
+    <Template>FPGA</Template>
+    <Version>5</Version>
+    <Device name="GW5A-25A" pn="GW5A-LV25UG324C2/I1">gw5a25a-008</Device>
+    <FileList>
+        <File path="src/include/audio_define.vh" type="file.verilog" enable="1"/>
+        <File path="src/include/audio_pkg.sv" type="file.verilog" enable="1"/>
+        <File path="src/include/interface_usb.sv" type="file.verilog" enable="1"/>
+        <File path="src/ip/gowin_dcs/gowin_dcs.v" type="file.verilog" enable="1"/>
+        <File path="src/ip/gowin_pll_fclk/gowin_pll_fclk.v" type="file.verilog" enable="1"/>
+        <File path="src/ip/gowin_pll_fclk/gowin_pll_fclk_mod.v" type="file.verilog" enable="1"/>
+        <File path="src/ip/gowin_pll_gen24/gowin_pll_gen24.v" type="file.verilog" enable="1"/>
+        <File path="src/ip/gowin_pll_gen24/gowin_pll_gen24_mod.v" type="file.verilog" enable="1"/>
+        <File path="src/ip/gowin_pll_iis/gowin_pll_iis.v" type="file.verilog" enable="1"/>
+        <File path="src/ip/gowin_pll_iis/gowin_pll_iis_mod.v" type="file.verilog" enable="1"/>
+        <File path="src/ip/gowin_pll_usb/gowin_pll_usb.v" type="file.verilog" enable="1"/>
+        <File path="src/ip/gowin_pll_usb/gowin_pll_usb_mod.v" type="file.verilog" enable="1"/>
+        <File path="src/ip/pll_init.v" type="file.verilog" enable="1"/>
+        <File path="src/ip/usb2_0_softphy/usb2_0_softphy.v" type="file.verilog" enable="1"/>
+        <File path="src/ip/usb_device_controller/usb_device_controller.v" type="file.verilog" enable="1"/>
+        <File path="src/rtl/TOP.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/USB_EP0_ctrl.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/spi_flash_controller/spi_flash_controller.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/spi_flash_controller/spi_phy.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/uac/IIS_CLK_GEN.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/uac/async_fifo.v" type="file.verilog" enable="1"/>
+        <File path="src/rtl/uac/audio_rx_iis2pcm.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/uac/audio_rx_pcm2usb.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/uac/audio_tx_pcm2dsd.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/uac/audio_tx_pcm2iis.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/uac/audio_tx_usb2pcm.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/uac/iis_gen.sv" type="file.verilog" enable="0"/>
+        <File path="src/rtl/uac/speaker_feedback.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/usb_des/usb_audio_descriptor.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/usb_des/usb_desc_params.vh" type="file.verilog" enable="1"/>
+        <File path="src/rtl/usb_endpoint/clk_cross_fifo.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/usb_endpoint/sync_rx_pkt_fifo.v" type="file.verilog" enable="1"/>
+        <File path="src/rtl/usb_endpoint/sync_tx_pkt_fifo.v" type="file.verilog" enable="1"/>
+        <File path="src/rtl/usb_endpoint/usb_cdc_in_buf.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/usb_endpoint/usb_cdc_out_buf.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/usb_endpoint/usb_ep_top.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/usb_endpoint/usb_ram_in_mem.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/usb_endpoint/usb_ram_out_mem.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/usb_endpoint/usb_uac_in_buf.sv" type="file.verilog" enable="1"/>
+        <File path="src/rtl/usb_endpoint/usb_uac_out_buf.sv" type="file.verilog" enable="1"/>
+        <File path="src/constrs/gowin_usb_refdesign.cst" type="file.cst" enable="1"/>
+        <File path="src/constrs/gowin_usb_refdesign.sdc" type="file.sdc" enable="1"/>
+        <File path="src/dsd_test.rao" type="file.gao" enable="0"/>
+        <File path="src/usb_refdesign.rao" type="file.gao" enable="0"/>
+        <File path="src/rtl/usb_des/usb_desc_2CN_HIFI+HID+DFU.hex" type="file.other" enable="1"/>
+        <File path="src/rtl/usb_des/usb_desc_2CN_HIFI.hex" type="file.other" enable="1"/>
+    </FileList>
+</Project>
