@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>USB 复合设备 (UAC HIFI + HID + DFU) 系统架构说明</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        @page {
+            size: A4;
+            margin: 15mm 15mm;
+            background-color: #ffffff;
+        }
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: #333333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            font-size: 11pt;
+        }
+        h1, h2, h3, h4 {
+            color: #1e293b;
+            page-break-after: avoid;
+        }
+        h1 {
+            font-size: 18pt;
+            text-align: center;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 14pt;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 5px;
+            margin-top: 25px;
+        }
+        h3 {
+            font-size: 12pt;
+            margin-top: 15px;
+        }
+        p {
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            page-break-inside: avoid;
+            font-size: 10pt;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f5f9;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        code {
+            font-family: Consolas, "Courier New", monospace;
+            background-color: #f1f5f9;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 10pt;
+            color: #b91c1c;
+        }
+        pre {
+            background-color: #f1f5f9;
+            padding: 10px;
+            border-left: 4px solid #94a3b8;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 10pt;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            page-break-inside: avoid;
+        }
+        .header-meta {
+            text-align: center;
+            color: #64748b;
+            font-size: 10pt;
+            margin-bottom: 30px;
+        }
+        .warning-box {
+            border-left: 4px solid #ef4444;
+            background-color: #fef2f2;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 0 4px 4px 0;
+            page-break-inside: avoid;
+        }
+        .info-box {
+            border-left: 4px solid #3b82f6;
+            background-color: #eff6ff;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 0 4px 4px 0;
+            page-break-inside: avoid;
+        }
+        ul, ol {
+            margin-bottom: 10px;
+            padding-left: 25px;
+        }
+        li {
+            margin-bottom: 5px;
+        }
+        .img-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .no-border-table td, .no-border-table th {
+            border: none;
+            background-color: transparent;
+            padding: 5px;
+            text-align: center;
+        }
+        .no-border-table tr:nth-child(even) {
+            background-color: transparent;
+        }
+        /* 针对 VS Code / Chrome 引擎的强制打印优化 */
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            @page {
+                size: A4;
+                margin: 15mm;
+            }
+            body {
+                zoom: 1; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>USB 复合设备 (UAC HIFI + HID + DFU) 系统架构说明</h1>
+    
+    <div class="header-meta">
+        <strong>文档版本:</strong> V1.0 &nbsp;&nbsp;|&nbsp;&nbsp; 
+        <strong>更新日期:</strong> 2026-07-27 <br>
+        <strong>项目描述:</strong> 基于 FPGA 的 UAC-HIFI / HID 复合设备工程 (含 DFU 背景升级)
+    </div>
+
+    <h2>修订历史</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 10%;">版本</th>
+                <th style="width: 15%;">日期</th>
+                <th style="width: 60%;">描述</th>
+                <th style="width: 15%;">作者</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>V1.0</td>
+                <td>2026-07-27</td>
+                <td>初始版本，实现 UAC-HIFI 音频输出（支持 IIS/DSD/DoP）、HID 数据回环与 DFU 在线升级功能</td>
+                <td>zefeng</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>1. 系统概述</h2>
+    <p>本工程基于 FPGA 实现了一个 USB 2.0 高速复合设备，集成 <strong>UAC 2.0 Hi-Fi 音频播放设备</strong>、<strong>HID 人机接口设备</strong> 以及 <strong>DFU 在线背景升级 (Device Firmware Upgrade)</strong> 三个核心功能模块。</p>
+    <p>本工程需要在<strong> DK_START_GW5A-LV25UG324_v2.0 开发板</strong> 上运行。</p>
+    <p><strong>UAC 2.0 音频</strong>采用异步反馈模式，支持44.1khz~768khz采样率及16/24/32bit位深，可输出32bit并行PCM数据、IIS或DSD/DoP格式信号。</p>
+    <p><strong>HID 子系统</strong>基于中断传输端点设计，当前版本仅预留回环测试功能。可根据用户实际需求定制。</p>
+    <p><strong>DFU在线升级</strong>基于标准协议实现背景更新。为确保设备高可靠性与防“砖”能力，底层采用了 Multi-Boot 多重启动架构对 8MB 的 SPI Flash 空间进行了严格划分：</p>
+    <ul>
+        <li><strong>工作位流 (Working Image)</strong>：位于 <code>0x000000</code>，作为 DFU 动态更新的目标区域；</li>
+        <li><strong>黄金位流 (Golden Image)</strong>：建议固化于 <code>0x100000</code> (地址可自定义)，作为系统恢复的底层安全基线。</li>
+    </ul>
+    <p>系统顶层模块 <code>Top</code> 集成了动态时钟切换（DCS）、USB 物理层 (SoftPHY)、USB 协议层以及具体的业务子系统，实现了从 USB 接口到底层音频 IIS/DSD 物理引脚及 SPI Flash 的数据互通。</p>
+
+    <h2>2. 外部硬件接口说明</h2>
+    <p>系统顶层 <code>Top</code> 暴露的物理引脚矩阵如下：</p>
+    <table>
+        <thead>
+            <tr>
+                <th>接口分类</th>
+                <th>信号引脚名称</th>
+                <th>方向</th>
+                <th>功能描述</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td rowspan="2"><strong>系统控制</strong></td>
+                <td><code>CLK_IN</code></td>
+                <td>Input</td>
+                <td>基础系统时钟输入</td>
+            </tr>
+            <tr>
+                <td><code>LED</code></td>
+                <td>Output</td>
+                <td>复位完成指示灯（系统复位释放后常亮）</td>
+            </tr>
+            <tr>
+                <td rowspan="4"><strong>USB 物理层</strong></td>
+                <td><code>usb_dxp_io</code> / <code>usb_dxn_io</code></td>
+                <td>Inout</td>
+                <td>USB DP/DN 差分数据总线</td>
+            </tr>
+            <tr>
+                <td><code>usb_rxdp_i</code> / <code>usb_rxdn_i</code></td>
+                <td>Input</td>
+                <td>USB 差分接收输入</td>
+            </tr>
+            <tr>
+                <td><code>usb_pullup_en_o</code></td>
+                <td>Output</td>
+                <td>USB D+ 1.5K 上拉电阻使能控制</td>
+            </tr>
+            <tr>
+                <td><code>usb_term_dp_io</code> / <code>usb_term_dn_io</code></td>
+                <td>Inout</td>
+                <td>USB 终端阻抗匹配引脚</td>
+            </tr>
+            <tr>
+                <td rowspan="4"><strong>SPI Flash</strong></td>
+                <td><code>spi_sclk</code></td>
+                <td>Output</td>
+                <td>SPI 总线时钟 (用于 DFU 烧录)</td>
+            </tr>
+            <tr>
+                <td><code>spi_cs</code></td>
+                <td>Output</td>
+                <td>SPI 片选信号 (低电平有效)</td>
+            </tr>
+            <tr>
+                <td><code>spi_mosi</code></td>
+                <td>Output</td>
+                <td>SPI 主机输出/从机输入 (MOSI) 数据线</td>
+            </tr>
+            <tr>
+                <td><code>spi_miso</code></td>
+                <td>Input</td>
+                <td>SPI 主机输入/从机输出 (MISO) 数据线</td>
+            </tr>
+            <tr>
+                <td rowspan="3"><strong>IIS Serial</strong></td>
+                <td><code>IIS_BCLK_O</code></td>
+                <td>Output</td>
+                <td>IIS 串行位时钟输出</td>
+            </tr>
+            <tr>
+                <td><code>IIS_LRCK_O</code></td>
+                <td>Output</td>
+                <td>IIS 左右声道帧时钟输出</td>
+            </tr>
+            <tr>
+                <td><code>IIS_DATA1_O</code></td>
+                <td>Output</td>
+                <td>IIS 音频串行数据输出 (CN01)</td>
+            </tr>
+            <tr>
+                <td rowspan="3"><strong>DSD Serial</strong></td>
+                <td><code>DSD_CLK_O</code></td>
+                <td>Output</td>
+                <td>DSD 音频位时钟输出</td>
+            </tr>
+            <tr>
+                <td><code>DSD_DATA1_O</code></td>
+                <td>Output</td>
+                <td>DSD 左声道串行数据输出</td>
+            </tr>
+            <tr>
+                <td><code>DSD_DATA2_O</code></td>
+                <td>Output</td>
+                <td>DSD 右声道串行数据输出</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>3. 核心子系统分解</h2>
+    <p>系统内部按逻辑域划分为以下五个主要子系统：各个模块之间通过基于 FIFO 的流水线传输进行数据交互。</p>
+    
+    <div class="img-container">
+        <img src="./picture/functional_diagram.png" alt="Functional Diagram" style="display: block; margin: 30px auto; width: 90%; height: auto; max-width: 100%;">
+    </div>
+
+    <h3>3.1 时钟与复位管理 (Clock & Reset Management)</h3>
+    <ul>
+        <li><strong><code>Gowin_PLL_gen24</code></strong>：将输入主时钟倍频/分频生成 24MHz 系统基准工作时钟。</li>
+        <li><strong><code>Gowin_PLL_usb</code></strong>：核心 USB 时钟引擎，为 USB 物理层和控制器提供 dedicated 60MHz PHY 工作时钟 (<code>PHY_CLKOUT</code>) 及 960MHz 高频采样时钟 (<code>fclk_960M</code>)。</li>
+        <li><strong><code>Gowin_PLL_iis</code> & <code>Gowin_DCS</code></strong>：音频基准时钟源。<code>iis_pll0</code> 产生 49.152MHz (对应 48kHz 采样率家族) 与 45.1584MHz (对应 44.1kHz 采样率家族) 两路基准音频时钟。利用动态时钟选择模块 <code>Gowin_DCS</code> 根据主机下发的 <code>sample_rate</code> 自动无缝切换主音频时钟 <code>xmclk</code>。</li>
+        <li><strong>复位控制逻辑</strong>：结合 PLL 锁定信号 (<code>pll_locked</code>)、内部计数器延时，以及 DFU 模式切换时的定时断开逻辑 (<code>disconnect_timer</code>)，实现安全的异步复位与同步释放，确保总线重枚举与上电稳态。</li>
+    </ul>
+
+    <h3>3.2 USB 底层通信框架 (USB Core Framework)</h3>
+    <ul>
+        <li><strong><code>USB2_0_SoftPHY_Top</code> (USB 物理层)</strong>：在 FPGA 逻辑内部实现 USB 2.0 PHY 功能，直接驱动外部物理引脚，向协议层提供标准的 UTMI 接口。</li>
+        <li><strong><code>USB_Device_Controller_Top</code> (USB 核心控制器)</strong>：处理底层 USB 通信协议，涵盖包组装与解析、CRC 校验、事务处理及端点 (Endpoint) 数据路由。</li>
+        <li><strong><code>usb_desc</code> (设备描述符 ROM)</strong>：存放设备的枚举描述符信息（声明 VID: <code>0x33AA</code>, PID: <code>0x1800</code>），支持根据是否处于 DFU 模式 (<code>i_dfu_mode</code>) 动态切换配置描述符拓扑。</li>
+        <li><strong><code>usb_ep_top</code> (端点管理器)</strong>：实现 USB 端点数据路由。本工程配置如下：
+            <ul>
+                <li><strong>EP0</strong>：默认控制端点；</li>
+                <li><strong>EP1 (OUT)</strong>：UAC 音频下行 Speaker 端点（采用 Audio 专用缓存）；</li>
+                <li><strong>EP2 (OUT / IN - <code>0x82</code>)</strong>：HID 双向中断端点（采用流式 FIFO 缓存）。</li>
+            </ul>
+        </li>
+        <li><strong><code>USB_EP0_ctrl</code> (USB 特定类请求控制器)</strong>：解析 Setup 包，拦截并处理 UAC 特定类请求（采样率设置、静音、音量调节、DoP/DSD 模式使能），支持对 DoP 标记码（<code>0x05</code>/<code>0xFA</code>）进行自动识别解析，控制 <code>dsd_en</code> 与 <code>dop_en</code> 标记。同时拦截并处理 DFU 类的特定下载指令。</li>
+    </ul>
+
+    <div class="info-box">
+        <strong>技术支持:</strong> 有关底层时序与接口的具体协议时序图，请参考《Gowin USB 2.0 SoftPHY IP 用户指南》与《Gowin USB 2.0 Device Controller IP 用户指南》。
+    </div>
+
+    <h3>3.3 UAC Hi-Fi 音频播放子系统 (USB Audio Class Subsystem)</h3>
+    <p>本子系统负责接收 USB 端点 1 下发的音频数据，完成协议解包并转化为标准 IIS 或 DSD 信号：</p>
+    <ul>
+        <li><strong><code>IIS_CLK_GEN</code> (IIS 时钟生成器)</strong>：基于当前采样率与数据位数，实时生成 <code>dac_bclk</code> 和 <code>dac_lrclk</code>。</li>
+        <li><strong><code>audio_tx_usb2pcm</code> (扬声器32位并行PCM数据转化)</strong>：实现 USB 8 位并行数据流到 32 位并行 PCM 数据的重组转化。</li>
+        <li><strong><code>audio_tx_pcm2iis</code> (扬声器 IIS 串行数据转化)</strong>：负责将 32 位并行 PCM 音频数据转换为标准的 IIS 串行总线时序信号 (BCLK, LRCK, DATA) 并输出至外部音频 DAC。</li>
+        <li><strong><code>audio_tx_pcm2dsd</code> (PCM/DoP 到 DSD 串行转换)</strong>：当检测到 DSD/DoP 格式使能时，提取 DSD 源码数据流并重构为标准的双通道 DSD 串行时序 (<code>DSD_CLK</code>, <code>DSD_DATA1</code>, <code>DSD_DATA2</code>) 输出。</li>
+        <li><strong><code>speaker_feedback</code> (异步反馈模块)</strong>：通过测量本地音频时钟（<code>xmclk</code>）相对 USB 帧起始信号（<code>usb_sof</code>）的周期数，动态计算 16.16 格式的反馈系数，通过 EP81 回传给主机，保证主机发包速率与本地消耗速率精准匹配。</li>
+    </ul>
+
+    <h3>3.4 HID 人机接口子系统 (HID Subsystem)</h3>
+    <ul>
+        <li><strong>数据回环逻辑</strong>：拦截 EP2 OUT 接收到的主机数据 (<code>ep2_rx_data</code>)，在 <code>PHY_CLKOUT</code> 时钟域下直接锁存打拍并送入 EP2 IN (<code>ep2_tx_data</code>)，实现数据传输验证。</li>
+    </ul>
+
+    <h3>3.5 DFU 背景升级子系统 (DFU Subsystem)</h3>
+    <p>本子系统实现了一个基于 USB 官方 DFU 类的背景在线升级功能。</p>
+    <ul>
+        <li><strong><code>USB_EP0_ctrl</code> (USB 特定类请求寄存器)</strong>：除常规控制请求外，负责拦截和解析 DFU 类特定请求（如 DFU_DNLOAD, DFU_GETSTATUS 等）。</li>
+        <li><strong><code>spi_flash_controller</code> (SPI Flash 控制器)</strong>：逻辑内部包含地址偏移路由机制：当系统处于 DFU 模式 (<code>is_dfu_mode</code> 有效) 时，控制器会自动将上位机下发的固件数据流定向写入外部 Flash 的 <code>0x000000</code> (工作位流) 区域。</li>
+    </ul>
+
+    <h2>4. 参数说明与配置指南</h2>
+    <p>本工程采用高度参数化的设计，用户可通过修改各子系统顶层模块的 <code>parameter</code> 或内部常量，快速裁剪系统功能与存储容量：</p>
+
+    <h3>4.1 全局工作模式宏定义 (<code>audio_define.vh</code>)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>宏定义参数</th>
+                <th>功能描述</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>HIFI_ONLY</code></td>
+                <td>定义该宏时将禁用 HID 及 DFU 相关的 EP2 模块，仅保留 UAC Hi-Fi 播放功能。</td>
+            </tr>
+            <tr>
+                <td><code>HIFI_HID_DFU</code></td>
+                <td>定义该宏时将包含全部复合功能，UAC Hi-Fi 播放、HID 回环及 DFU 升级功能。</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.2 端点与接口映射参数 (<code>usb_ep_top</code>)</h3>
+    <p>该模块负责统筹所有端点的底层硬件资源与数据链路路由。系统采用灵活的参数化映射机制，通过独立配置以下映射表，可以为不同端点号 (Endpoint Number) 动态指派具体的业务场景以及最合适的缓存架构。</p>
+    
+    <p><strong>模式定义说明：</strong></p>
+    <ul>
+        <li><code>0</code>: DISABLE (端点禁用)</li>
+        <li><code>1</code>: UMS (采用 Ping-Pong RAM，适用于高吞吐量的整包数据交互)</li>
+        <li><code>2</code>: CDC (采用纯 FIFO，适用于低延迟的 UART 流式透传)</li>
+        <li><code>3</code>: UAC (采用专用 Audio 缓存机制，适用于等时音频流)</li>
+    </ul>
+
+    <table>
+        <thead>
+            <tr>
+                <th>参数名称</th>
+                <th>当前配置值</th>
+                <th>功能描述</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>EP_OUT_MODE</code></td>
+                <td><code>'{ 1:3, 2:2, default:0 }</code></td>
+                <td><strong>OUT 端点模式映射表</strong>。<br>定义主机到设备的下行数据流业务。当前配置：<br>• <strong>EP1</strong>: 模式 3 (UAC 下行，服务于 Speaker 扬声器)<br>• <strong>EP2</strong>: 模式 2 (HID OUT，服务于 HID 接收)</td>
+            </tr>
+            <tr>
+                <td><code>EP_IN_MODE</code></td>
+                <td><code>'{ 1:0, 2:2, default:0 }</code></td>
+                <td><strong>IN 端点模式映射表</strong>。<br>定义设备到主机的上行数据流业务。当前配置：<br>• <strong>EP2</strong>: 模式 2 (HID 上行，服务于 HID 发送)</td>
+            </tr>
+            <tr>
+                <td><code>EP_UAC_INTF</code></td>
+                <td><code>'{ 1:1, default:0 }</code></td>
+                <td><strong>UAC 接口绑定映射表</strong>。<br>专用于 UAC 模式，将音频端点与具体的 USB 音频接口 (Interface) 编号绑定，以便正确解析主机下发的特定类请求。当前配置：<br>• <strong>EP1</strong> 绑定至 Interface 1</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.3 设备描述符与识别参数 (<code>usb_desc</code>)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>参数名称</th>
+                <th>默认取值</th>
+                <th>功能描述</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>VENDORID</code></td>
+                <td><code>16'h33AA</code></td>
+                <td>厂商识别码 (VID)</td>
+            </tr>
+            <tr>
+                <td><code>PRODUCTID</code></td>
+                <td><code>16'h1800</code></td>
+                <td>产品识别码 (PID)</td>
+            </tr>
+            <tr>
+                <td><code>VERSIONBCD</code></td>
+                <td><code>16'h0100</code></td>
+                <td>产品固件版本号 (BCD 格式，此处代表 V1.00)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="page-break-after: always;"></div>
+
+    <h2>5. 功能测试 —— UAC HIFI 播放</h2>
+    
+    <h3>5.1 驱动安装与测试软件准备</h3>
+    <ul>
+        <li><strong>音频播放测试软件</strong>：Foobar2000 或 REW (Room EQ Wizard)。</li>
+        <li><strong>音频驱动</strong>：Windows/MacOS 原生驱动，支持 DSD 的专属 ASIO 驱动。</li>
+        <li><strong>硬件接线</strong>：将逻辑分析仪或示波器连接至开发板的 <code>IIS_BCLK_O</code>, <code>IIS_LRCK_O</code>, <code>IIS_DATA1_O</code> 以及 <code>DSD_CLK_O</code>, <code>DSD_DATA1_O</code>, <code>DSD_DATA2_O</code> 测试引脚，也可外接 DAC 解码板。</li>
+    </ul>
+
+    <div class="img-container">
+        <img src="./picture/GPIO.jpg" alt="GPIO" style="display: block; margin: 30px auto; width: 70%; height: auto; max-width: 100%;">
+    </div>
+
+    <h3>5.2 音频播放及 IIS/DSD 信号验证</h3>
+    <ol>
+        <li><strong>设备识别与采样率设置</strong>：
+            <ul>
+                <li>连接开发板 USB 至电脑，在 Windows“声音控制面板”中可观察到新增音频输出设备 <strong>USB Audio Device</strong> (VID: <code>33AA</code>, PID: <code>1800</code>)。</li>
+                <li>进入“设备属性 -&gt; 高级”，可自由切换采样率（如 24-bit/48kHz, 24-bit/96kHz, 32-bit/192kHz 等）。</li>
+            </ul>
+        </li>
+        <li><strong>PCM 音频播放测试</strong>：
+            <ul>
+                <li>使用 Foobar2000 或者 REW 播放标准 PCM 1kHz 正弦波音频文件。</li>
+                <li>使用示波器/逻辑分析仪观察 <code>IIS_BCLK_O</code>, <code>IIS_LRCK_O</code> 与 <code>IIS_DATA1_O</code>。确认 <code>LRCK</code> 频率严格等于设定采样率（如 48kHz），<code>BCLK</code> 频率为对应位时钟，数据线正常输出 32 位位宽的 PCM 正弦波数据包。</li>
+            </ul>
+        </li>
+        <li><strong>DoP / DSD 音频播放测试</strong>：
+            <ul>
+                <li>在 Foobar2000 中配置 DSD 播放插件（如 <code>foo_input_sacd</code>），输出模式设置为 <strong>DSD over PCM (DoP)</strong>。</li>
+                <li>播放 DSD64 / DSD128 测试曲目。</li>
+                <li>观察顶层硬件输出：逻辑内部将自动识别 DoP 标记头 (<code>0x05</code> / <code>0xFA</code>) 并拉高 <code>dop_en</code> / <code>dsd_en</code>。此时 PCM/IIS 输出切换为无声/静音，物理引脚 <code>DSD_CLK_O</code> 与 <code>DSD_DATA1_O/DATA2_O</code> 开始正确输出高频 DSD 位流。</li>
+            </ul>
+        </li>
+    </ol>
+
+    <p><strong>高采样率与特殊格式播放测试说明</strong></p>
+    <ol>
+        <li><strong>高采样率测试建议 (705.6kHz / 768kHz)</strong><br>
+        在 Windows 系统的原生 USB 音频驱动下，常规播放器最高仅支持至 192kHz 采样率。若需验证 705.6kHz 或 768kHz 等超高采样率的播放功能，建议将设备连接至 <strong>macOS</strong> 系统或者 智能手机 进行测试，其原生驱动可直接支持更高采样率的输出。</li>
+        <li><strong>DoP / DSD 音频协议测试 (推荐使用“海贝音乐”)</strong><br>
+        由于在 PC 端输出 DoP 或原生 DSD 协议音频通常需要绑定特定设备型号的专属驱动（如 ASIO 驱动），为简化测试流程，推荐使用智能手机配合 <strong>“海贝音乐” APP</strong> 进行验证。该软件能够无视设备的 VID/PID 限制，通过 USB 独占模式播放 .dff 文件，直接输出符合规范的 DSD/DoP 音频数据流。</li>
+    </ol>
+
+    <p><strong>海贝音乐 APP 配置步骤（参考下图）：</strong></p>
+    <ul>
+        <li><strong>步骤 1</strong>：打开 APP，点击左侧展开用户侧边栏，进入 <strong>“设置”</strong>。</li>
+        <li><strong>步骤 2</strong>：在 USB 音频相关选项中，勾选开启 <strong>“海贝音乐独占USB输出”</strong>。</li>
+        <li><strong>步骤 3</strong>：点击 <strong>“DSD模式”</strong>，根据当前的测试需求，选择希望输出的音频格式（<strong>PCM / DoP / Native</strong>）。</li>
+    </ul>
+
+    <table class="no-border-table" style="width: 100%; text-align: center;">
+        <tr>
+            <td style="width: 50%;"><img src="./picture/And_dsd1.jpg" alt="图片1" style="max-width: 70%;"></td>
+            <td style="width: 50%;"><img src="./picture/And_dsd2.jpg" alt="图片2" style="max-width: 70%;"></td>
+        </tr>
+        <tr>
+            <td>图1：步骤一示意图</td>
+            <td>图2：步骤二示意图</td>
+        </tr>
+    </table>
+
+    <h2>6. 功能测试 —— HID 回环测试</h2>
+    <p>HID 子系统配置为中断端点 (Endpoint 2)，在 FPGA 内部实现了纯逻辑锁存数据回环。</p>
+
+    <h3>6.1 测试环境配置</h3>
+    <ul>
+        <li><strong>测试工具</strong>：打开配套 tools 文件夹中 <strong>HID+DFU测试软件.exe</strong>。</li>
+        <li><strong>接口识别</strong>：确定设备配置中 VID/PID/interface 是否与设计相同（默认为 <code>33AA:1800:2</code>），点击应用并查找。显示 "设备状态：已连接"，则说明设备已成功链接。</li>
+    </ul>
+
+    <h3>6.2 数据收发与回环验证</h3>
+    <p>该软件包含三种简单的回环测试。</p>
+    <ol>
+        <li><strong>基础递增测试</strong><br>
+        验证主机与 HID 设备之间基础数据的收发连通性。通过发送一组 16 字节的递增序列载荷（例如 <code>[0, 1, 2, ..., 15]</code>），并等待设备将其原样返回，以确保基础通信链路畅通无阻。</li>
+        <li><strong>边界值测试</strong><br>
+        验证设备在处理特殊或极端比特模式数据时的正确性，排查是否存在数据位翻转或解析错误。测试依次发送以下四组具有代表性的 16 字节序列进行比对验证：
+            <ul>
+                <li>全 <code>0x00</code></li>
+                <li>全 <code>0xFF</code></li>
+                <li>交替 <code>0x55</code> (即二进制 01010101)</li>
+                <li>交替 <code>0xAA</code> (即二进制 10101010)</li>
+            </ul>
+        </li>
+        <li><strong>100次压力测试</strong><br>
+        评估设备在高频连续通信情况下的稳定性。循环连续发送 100 组随机生成的 16 字节数据，并配置严格的读取超时限制，检查是否存在偶发性丢包、时序混乱或校验错误，期望收发成功率达到 100%。</li>
+    </ol>
+
+    <div class="img-container">
+        <img src="./picture/hid_test_cn.png" alt="HID Test" style="display: block; margin: 30px auto; width: 60%; height: auto; max-width: 100%;">
+    </div>
+   
+    <h2>7. 功能测试 —— DFU 背景升级</h2>
+    <p>本系统采用 Multi-Boot 多重启动架构，为了实现安全的远程升级与数据隔离，系统将外部 GD25Q64ESIG SPI Flash (8MB) 的物理地址进行了如下映射：</p>
+    <ul>
+        <li><code>0x000000</code>：工作位流 (Working Image)，DFU 协议的默认下载与擦写目标地址。</li>
+        <li><code>0x100000</code>：黄金位流 (Golden Image)，出厂固化的安全备份区域。该地址可以自定义。</li>
+    </ul>
+
+    <h3>7.1 FPGA芯片配置参数预置</h3>
+    
+    <div class="warning-box">
+        <strong>⚠️ 硬件操作警告：</strong><br>
+        下述配置参数中的 <strong>黄金位流地址 (Golden Boot Address)</strong> 与 <strong>AES 解密密钥</strong> 底层基于 eFuse 机制，存在<strong>不可逆的单向写入限制</strong>（某一位一旦由 <code>0</code> 修改为 <code>1</code> 将永远无法恢复）。操作前请务必仔细核对！<br>
+        此外，执行此类参数写入操作前，<strong>必须先为开发板的 VQPS 引脚提供稳定的 1.8V 供电</strong>，然后才能进行后续的软配置写入，否则将导致操作失败。
+    </div>
+
+    <div class="img-container">
+        <img src="./picture/board.jpg" alt="Board" style="max-width: 50%; margin: 10px auto;">
+    </div>
+    <div class="img-container">
+        <img src="./picture/vefuse.png" alt="eFuse" style="max-width: 60%; margin: 10px auto;">
+    </div>
+
+    <p><strong>黄金位流地址设定</strong>：</p>
+    <ol>
+        <li>打开 Programmer，选中当前器件，右键选中 <strong>“MSPI 2nd Boot Address”</strong> 选项，进入配置页面。</li>
+        <li>点击 "Read"，读取当前已配置的启动地址。显示为 <code>0x800_000</code>，但实际上默认地址为 <code>0x000_000</code>。</li>
+        <li>在输入框填写目标启动地址（此工程应改为 <code>0x100_000</code>），点击“Write”按钮。若提示“Write Success”，则表示写入成功。</li>
+        <li>再次点击“Read”，确认显示地址与写入值一致，确保配置生效。</li>
+    </ol>
+
+    <div class="img-container">
+        <img src="./picture/mspi_2nd_ad.png" alt="MSPI" style="max-width: 50%; margin: 10px auto;">
+    </div>
+
+    <p><strong>AES 密钥设定</strong>：</p>
+    <p>Arora V 家族 FPGA 产品支持比特流数据加密，采用 128bit 的 AES 加密算法。用户可以在编译时加入 AES 密钥。器件上电后将会识别含有预设 AES 密钥的加密位流以及未加密的位流，并自动跳过 AES 密钥不匹配的加密位流。</p>
+    <ol>
+        <li><strong>输入加密密钥</strong>：菜单栏选择 "Project - Configuration"，点击 “BitStream”，勾选“Enable Encryption”并输入密钥值，如下图所示。此后进行编译时，Gowin EDA 会自动将该密钥信息置入到位流文件中。</li>
+    </ol>
+
+    <div class="img-container">
+        <img src="./picture/cfg_key.png" alt="Config Key" style="max-width: 50%; margin: 10px auto;">
+    </div>
+
+    <ol start="2">
+        <li><strong>设置解密密钥</strong>：打开 Programmer，选中当前器件，右键选中“Security Key Setting”选项。在弹出界面中输入加密的密钥值，单击“Write”将其固化到 FPGA 中。如下图所示：</li>
+    </ol>
+
+    <div class="img-container">
+        <img src="./picture/key.png" alt="Key Setting" style="max-width: 60%; margin: 10px auto;">
+    </div>
+
+    <p><em>更具体的说明可见《UG714-Arora V 25K FPGA Products Programming and Configuration Guide》 —— 4.3 Security</em></p>
+
+    <h3>7.2 黄金位流 (Golden Image) 与 工作位流 （Working Image） 预置</h3>
+    <p>为了保证防砖机制能够正常介入，在交付前或首次测试前，需先通过硬件下载器将稳定版本的 <code>golden_DFU_V1.0.fs</code> 固件烧录至黄金地址。</p>
+    <ol>
+        <li>打开 Gowin Programmer，配置 Access Mode 为 <code>External Flash Mode Arora V</code>。</li>
+        <li>在高级设置中，将烧录的起始地址 (Start Address) 手动修改为 <code>0x100000</code>。</li>
+        <li>选择预先编译好的 Golden Image（仅 DFU 文件）位流文件并执行烧录。</li>
+        <li>在高级设置中，将烧录的起始地址 (Start Address) 手动修改为 <code>0x000000</code>。</li>
+        <li>选择预先编译好的 Working Image（包含 UAC + HID + DFU）位流文件并执行烧录。</li>
+    </ol>
+
+    <h3>7.3 环境配置与驱动安装</h3>
+    <p>Windows 系统默认情况下可能未正确加载 DFU 接口驱动，需借助 Zadig 工具配置。后续将会推出免装驱动版本 DFU 远程升级 demo。</p>
+    <ol>
+        <li><strong>连接设备</strong>：将 FPGA 开发板通过 USB 数据线连接至电脑，右键以管理员身份运行 Zadig。</li>
+        <li><strong>枚举设备</strong>：在顶部菜单栏依次点击 <code>Options</code> → <code>List All Devices</code>，确保工具能读取当前所有的 USB 物理设备。</li>
+        <li><strong>选择目标硬件</strong>：在主界面的下拉列表中选中您的 DFU 设备（标识默认为 <strong>DFU Runtime(interface 0/3)</strong>）。请务必核对设备名称以免误操作。</li>
+        <li><strong>指定驱动协议</strong>：在右侧的 Target 驱动选择框中，通过箭头切换并选择 <strong>WinUSB(v6.x.xxxx)</strong>。</li>
+    </ol>
+
+    <div class="img-container">
+        <img src="./picture/zadig_dfu.png" alt="Zadig" style="max-width: 60%; margin: 10px auto;">
+    </div>
+
+    <h3>7.4 使用 dfu-util 执行升级测试</h3>
+    <p>本节主要验证通过 DFU (Device Firmware Upgrade) 接口向开发板外部的 SPI Flash 写入新固件的功能。测试提供了两种可选方式：使用图形化配套软件，或使用开源命令行工具 <code>dfu-util</code>。</p>
+
+    <h4>7.4.1 方法一：使用图形界面 (GUI) 工具执行升级</h4>
+    <p>本次测试使用配套 <code>tools</code> 文件夹中的 <strong>HID+DFU测试软件.exe</strong> 向开发板写入新固件。</p>
+
+    <p><strong>测试环境与注意事项</strong></p>
+    <ul>
+        <li><strong>环境依赖</strong>：请确保该测试软件与 <code>dfu-util.exe</code> 以及 <code>libusb-1.0.dll</code> 位于同一文件夹目录下，或者已将 <code>dfu-util</code> 的路径成功添加至系统环境变量中，否则将导致下载功能无法调用。</li>
+        <li><strong>连接状态</strong>：在进行 DFU 升级测试时，软件界面的 VID/PID 以及当前的“设备连接状态”无需特别关注。</li>
+    </ul>
+
+    <p><strong>升级操作步骤</strong></p>
+    <ol>
+        <li><strong>选择固件</strong>：点击“<strong>选择固件文件</strong>”按钮，在弹出的窗口中选择您希望下载的 <code>.bin</code> 固件文件。</li>
+        <li><strong>进入 DFU 模式</strong>：点击“<strong>执行 Detach</strong>”按钮，触发设备切换至 DFU 模式。</li>
+        <li><strong>下载固件</strong>：点击“<strong>执行 Download</strong>”按钮，软件将开始把 <code>.bin</code> 文件下载至开发板的 <code>spi_flash</code> 中。此时，下方的输出窗口会实时显示实际的下载进度。</li>
+        <li><strong>重启生效</strong>：下载进度完成后，对开发板<strong>重新上电</strong>（断电后重新连接），设备即可加载并运行新烧录的固件。</li>
+    </ol>
+
+    <div class="img-container">
+        <img src="./picture/dfu_test_cn.png" alt="DFU Test" style="max-width: 50%; margin: 10px auto;">
+    </div>
+
+    <p><strong>测试固件说明</strong></p>
+    <p>附件的 <code>DFU_bin</code> 文件夹中提供了以下几个固件供测试使用：</p>
+    <ul>
+        <li><code>5A25_HIFI+HID+DFU_V1.0.bin</code> —— 本工程完整固件，包含 UAC-HIFI、HID 及 DFU 功能。</li>
+        <li><code>5A25_HIFIonly_V1.0.bin</code> —— 本工程裁剪固件，<strong>仅包含</strong> UAC-HIFI 功能。</li>
+        <li><code>mode_2CN_V1.4.0.bin</code> —— 测试固件，包含 DFU 功能。</li>
+        <li><code>mode_8CN_V1.4.0.bin</code> —— 测试固件，包含 DFU 功能。</li>
+    </ul>
+
+    <div class="warning-box">
+        <strong>⚠️ 重要提示：</strong><br>
+        除 <code>5A25_HIFIonly_V1.0.bin</code> 之外，其余三个固件均保留了 DFU 升级功能。这意味着在烧录这三个固件并重新上电后，您依然可以继续使用该软件进行下一次的固件烧录。如果烧录了 <code>HIFIonly</code> 固件，重新上电后设备将不再响应后续的 DFU 升级请求。
+    </div>
+
+    <h4>7.4.2 方法二：使用 dfu-util 命令行执行升级</h4>
+    <p>您也可以使用跨平台的开源命令行工具 <code>dfu-util</code> 进行测试。请确保已将 <code>dfu-util</code> 添加至系统的环境变量中。</p>
+
+    <p><strong>步骤 1：准备固件位流文件</strong></p>
+    <p>在工程综合工具中，右键打开 Configuration —— BitStream —— General —— Bitstream Format，选择 <strong>Binary</strong>。编译完成后，软件会在 <code>pnr</code> 文件夹中生成对应的 <code>.fs</code>、<code>.bin</code> 以及 <code>.binx</code> 固件文件。准备好需要更新的 <code>.bin</code> 文件（例如命名为 <code>update_v2.bin</code>）。</p>
+
+    <div class="img-container">
+        <img src="./picture/bin.png" alt="Bin File" style="max-width: 60%; margin: 10px auto;">
+    </div>
+
+    <p><strong>步骤 2：枚举并识别设备</strong></p>
+    <p>打开命令行终端 (CMD / PowerShell)，输入以下命令检查设备是否被正确识别：</p>
+    <pre><code>dfu-util -l</code></pre>
+    <p>若驱动正常，终端将列出当前支持 DFU 的设备，并显示对应的 VID 与 PID（如 <code>33AA:1800</code>）。</p>
+
+    <p><strong>步骤 3：下发新固件</strong></p>
+    <p>在终端中执行以下命令，触发设备从 APP 模式切换至 DFU 下载模式：</p>
+    <pre><code>dfu-util -e</code></pre>
+    <p>随后，执行以下命令发起下载：</p>
+    <pre><code>dfu-util -d 33AA:1800 -a 0 -D update_v2.bin</code></pre>
+    
+    <p><strong>参数说明：</strong></p>
+    <ul>
+        <li><code>-d 33AA:1800</code>：指定目标设备的 VID:PID。</li>
+        <li><code>-a 0</code>：指定更新目标为 Alt Setting 0，底层逻辑会自动映射至 Flash 的 <code>0x000000</code> 地址。</li>
+        <li><code>-D</code>：指令为 Download（下载指定固件至设备）。</li>
+    </ul>
+
+    <div class="img-container">
+        <img src="./picture/cmd.png" alt="CMD" style="max-width: 50%; margin: 10px auto;">
+    </div>
+
+    <p><strong>步骤 4：背景升级监控与状态说明</strong></p>
+    <p>执行下载命令后，终端会出现下载进度条。此时，USB 控制器接收数据流，并驱动 SPI Flash 控制器对 <code>0x000000</code> 区域执行擦写操作。</p>
+    
+    <div class="info-box">
+        <strong>💡 复合功能并发说明：</strong><br>
+        当设备进入 DFU 模式时，将会被系统视为一个纯 DFU 设备，暂时失去原本的 UAC 与 HID 功能。DFU 下载完成后（进度达到 100% 且提示 “Done”），设备会自动恢复至 APP 模式，此时即可重新测试 UAC 与 HID 功能。但请注意，此时运行的仍是旧逻辑，需等待下一次重新上电，FPGA 才会真正从 <code>0x000000</code> 加载新固件。
+    </div>
+
+    <p><strong>步骤 5：复位与多重启动验证 (防砖测试)</strong></p>
+    <ol>
+        <li><strong>正常启动验证</strong>：确认下载完成后，断电并重新上电，观察系统是否按新版本固件逻辑正常运行。</li>
+        <li><strong>防砖回退验证 (破坏性测试)</strong>：您可以尝试下载 AES 密钥与当前不符或已损坏的 bin 位流文件，以模拟固件损坏的极端情况。重新上电后，Arora-V 芯片在校验 <code>0x000000</code> 失败时，会自动触发多重启动机制，回退并加载位于 <code>0x100000</code> 备份地址的黄金位流 (Golden Image)。系统依靠黄金位流成功启动后，您可以重新使用 DFU 对 <code>0x000000</code> 地址覆盖下载正确的位流文件，以此验证设备的自恢复能力。</li>
+    </ol>
+
+</body>
+</html>

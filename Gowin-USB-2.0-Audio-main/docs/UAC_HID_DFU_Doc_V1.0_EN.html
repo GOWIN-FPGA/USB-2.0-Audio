@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>USB Composite Device (UAC HIFI + HID + DFU) System Architecture Specification</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; }
+        @page {
+            size: A4;
+            margin: 15mm 15mm;
+            background-color: #ffffff;
+        }
+        body {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            color: #333333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            font-size: 11pt;
+        }
+        h1, h2, h3, h4 {
+            color: #1e293b;
+            page-break-after: avoid;
+        }
+        h1 {
+            font-size: 18pt;
+            text-align: center;
+            margin-top: 15px;
+            margin-bottom: 10px;
+        }
+        h2 {
+            font-size: 14pt;
+            border-bottom: 1px solid #cbd5e1;
+            padding-bottom: 5px;
+            margin-top: 25px;
+        }
+        h3 {
+            font-size: 12pt;
+            margin-top: 15px;
+        }
+        p {
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            page-break-inside: avoid;
+            font-size: 10pt;
+        }
+        th, td {
+            border: 1px solid #cbd5e1;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #f1f5f9;
+            font-weight: bold;
+            color: #0f172a;
+        }
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+        code {
+            font-family: Consolas, "Courier New", monospace;
+            background-color: #f1f5f9;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 10pt;
+            color: #b91c1c;
+        }
+        pre {
+            background-color: #f1f5f9;
+            padding: 10px;
+            border-left: 4px solid #94a3b8;
+            font-family: Consolas, "Courier New", monospace;
+            font-size: 10pt;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            page-break-inside: avoid;
+        }
+        .header-meta {
+            text-align: center;
+            color: #64748b;
+            font-size: 10pt;
+            margin-bottom: 30px;
+        }
+        .warning-box {
+            border-left: 4px solid #ef4444;
+            background-color: #fef2f2;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 0 4px 4px 0;
+            page-break-inside: avoid;
+        }
+        .info-box {
+            border-left: 4px solid #3b82f6;
+            background-color: #eff6ff;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 0 4px 4px 0;
+            page-break-inside: avoid;
+        }
+        ul, ol {
+            margin-bottom: 10px;
+            padding-left: 25px;
+        }
+        li {
+            margin-bottom: 5px;
+        }
+        .img-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .no-border-table td, .no-border-table th {
+            border: none;
+            background-color: transparent;
+            padding: 5px;
+            text-align: center;
+        }
+        .no-border-table tr:nth-child(even) {
+            background-color: transparent;
+        }
+        /* Mandatory print optimizations for VS Code / Chrome engines */
+        @media print {
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            @page {
+                size: A4;
+                margin: 15mm;
+            }
+            body {
+                zoom: 1; 
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h1>USB Composite Device (UAC HIFI + HID + DFU) System Architecture Specification</h1>
+    
+    <div class="header-meta">
+        <strong>Document Version:</strong> V1.0 &nbsp;&nbsp;|&nbsp;&nbsp; 
+        <strong>Update Date:</strong> 2026-07-27 <br>
+        <strong>Project Description:</strong> FPGA-based UAC-HIFI / HID Composite Device Project (with DFU Background Upgrade)
+    </div>
+
+    <h2>Revision History</h2>
+    <table>
+        <thead>
+            <tr>
+                <th style="width: 10%;">Version</th>
+                <th style="width: 15%;">Date</th>
+                <th style="width: 60%;">Description</th>
+                <th style="width: 15%;">Author</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>V1.0</td>
+                <td>2026-07-27</td>
+                <td>Initial version, implementing UAC-HIFI audio output (supports IIS/DSD/DoP), HID data loopback, and DFU online upgrade functions.</td>
+                <td>zefeng</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>1. System Overview</h2>
+    <p>This project implements a USB 2.0 high-speed composite device based on FPGA, integrating three core functional modules: a <strong>UAC 2.0 Hi-Fi audio playback device</strong>, a <strong>HID human-machine interface device</strong>, and a <strong>DFU (Device Firmware Upgrade) online background upgrade module</strong>.</p>
+    <p>This project requires the <strong>DK_START_GW5A-LV25UG324_v2.0 development board </strong>to run.</p>
+    <p><strong>UAC 2.0 Audio</strong> adopts an asynchronous feedback mode, supporting sampling rates from 44.1kHz to 768kHz and 16/24/32-bit depth. It can output 32-bit parallel PCM data, IIS, or DSD/DoP format signals.</p>
+    <p>The <strong>HID Subsystem</strong> is designed based on interrupt transfer endpoints. The current version only reserves the loopback test function. It can be customized according to actual user needs.</p>
+    <p>The <strong>DFU online upgrade</strong> implements background updates based on standard protocols. To ensure high device reliability and anti-brick capability, the bottom layer adopts a Multi-Boot architecture, strictly partitioning the 8MB SPI Flash space:</p>
+    <ul>
+        <li><strong>Working Image</strong>: Located at <code>0x000000</code>, serving as the target area for dynamic DFU updates;</li>
+        <li><strong>Golden Image</strong>: Recommended to be programmed at <code>0x100000</code> (address is customizable), serving as the underlying security baseline for system recovery.</li>
+    </ul>
+    <p>The system top-level module <code>Top</code> integrates Dynamic Clock Switching (DCS), the USB Physical Layer (SoftPHY), the USB Protocol Layer, and specific business subsystems, realizing data interconnection from the USB interface to the underlying audio IIS/DSD physical pins and SPI Flash.</p>
+
+    <h2>2. External Hardware Interface Description</h2>
+    <p>The physical pin matrix exposed by the system's top-level <code>Top</code> is as follows:</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Interface Category</th>
+                <th>Signal Pin Name</th>
+                <th>Direction</th>
+                <th>Functional Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td rowspan="2"><strong>System Control</strong></td>
+                <td><code>CLK_IN</code></td>
+                <td>Input</td>
+                <td>Basic system clock input</td>
+            </tr>
+            <tr>
+                <td><code>LED</code></td>
+                <td>Output</td>
+                <td>Reset completion indicator (always on after system reset is released)</td>
+            </tr>
+            <tr>
+                <td rowspan="4"><strong>USB Physical Layer</strong></td>
+                <td><code>usb_dxp_io</code> / <code>usb_dxn_io</code></td>
+                <td>Inout</td>
+                <td>USB DP/DN differential data bus</td>
+            </tr>
+            <tr>
+                <td><code>usb_rxdp_i</code> / <code>usb_rxdn_i</code></td>
+                <td>Input</td>
+                <td>USB differential receive input</td>
+            </tr>
+            <tr>
+                <td><code>usb_pullup_en_o</code></td>
+                <td>Output</td>
+                <td>USB D+ 1.5K pull-up resistor enable control</td>
+            </tr>
+            <tr>
+                <td><code>usb_term_dp_io</code> / <code>usb_term_dn_io</code></td>
+                <td>Inout</td>
+                <td>USB terminal impedance matching pins</td>
+            </tr>
+            <tr>
+                <td rowspan="4"><strong>SPI Flash</strong></td>
+                <td><code>spi_sclk</code></td>
+                <td>Output</td>
+                <td>SPI bus clock (for DFU programming)</td>
+            </tr>
+            <tr>
+                <td><code>spi_cs</code></td>
+                <td>Output</td>
+                <td>SPI chip select signal (active low)</td>
+            </tr>
+            <tr>
+                <td><code>spi_mosi</code></td>
+                <td>Output</td>
+                <td>SPI Master Out / Slave In (MOSI) data line</td>
+            </tr>
+            <tr>
+                <td><code>spi_miso</code></td>
+                <td>Input</td>
+                <td>SPI Master In / Slave Out (MISO) data line</td>
+            </tr>
+            <tr>
+                <td rowspan="3"><strong>IIS Serial</strong></td>
+                <td><code>IIS_BCLK_O</code></td>
+                <td>Output</td>
+                <td>IIS serial bit clock output</td>
+            </tr>
+            <tr>
+                <td><code>IIS_LRCK_O</code></td>
+                <td>Output</td>
+                <td>IIS left/right channel frame clock output</td>
+            </tr>
+            <tr>
+                <td><code>IIS_DATA1_O</code></td>
+                <td>Output</td>
+                <td>IIS audio serial data output (CN01)</td>
+            </tr>
+            <tr>
+                <td rowspan="3"><strong>DSD Serial</strong></td>
+                <td><code>DSD_CLK_O</code></td>
+                <td>Output</td>
+                <td>DSD audio bit clock output</td>
+            </tr>
+            <tr>
+                <td><code>DSD_DATA1_O</code></td>
+                <td>Output</td>
+                <td>DSD left channel serial data output</td>
+            </tr>
+            <tr>
+                <td><code>DSD_DATA2_O</code></td>
+                <td>Output</td>
+                <td>DSD right channel serial data output</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>3. Core Subsystem Breakdown</h2>
+    <p>The system internals are divided into the following five main subsystems by logical domains. Modules interact via FIFO-based pipeline transmission.</p>
+    
+    <div class="img-container">
+        <img src="./picture/functional_diagram.png" alt="Functional Diagram" style="display: block; margin: 30px auto; width: 90%; height: auto; max-width: 100%;">
+    </div>
+
+    <h3>3.1 Clock & Reset Management</h3>
+    <ul>
+        <li><strong><code>Gowin_PLL_gen24</code></strong>: Multiplies/divides the input main clock to generate a 24MHz system reference working clock.</li>
+        <li><strong><code>Gowin_PLL_usb</code></strong>: Core USB clock engine, providing the dedicated 60MHz PHY working clock (<code>PHY_CLKOUT</code>) and 960MHz high-frequency sampling clock (<code>fclk_960M</code>) for the USB physical layer and controller.</li>
+        <li><strong><code>Gowin_PLL_iis</code> & <code>Gowin_DCS</code></strong>: Audio reference clock source. <code>iis_pll0</code> generates two reference audio clocks: 49.152MHz (for the 48kHz sampling rate family) and 45.1584MHz (for the 44.1kHz sampling rate family). The dynamic clock selection module <code>Gowin_DCS</code> automatically and seamlessly switches the main audio clock <code>xmclk</code> based on the <code>sample_rate</code> issued by the host.</li>
+        <li><strong>Reset control logic</strong>: Combines the PLL lock signal (<code>pll_locked</code>), internal counter delay, and timing disconnect logic (<code>disconnect_timer</code>) during DFU mode switching to achieve safe asynchronous reset and synchronous release, ensuring bus re-enumeration and power-on steady state.</li>
+    </ul>
+
+    <h3>3.2 USB Core Framework</h3>
+    <ul>
+        <li><strong><code>USB2_0_SoftPHY_Top</code> (USB Physical Layer)</strong>: Implements USB 2.0 PHY functions within the FPGA logic, directly driving external physical pins and providing a standard UTMI interface to the protocol layer.</li>
+        <li><strong><code>USB_Device_Controller_Top</code> (USB Core Controller)</strong>: Handles underlying USB communication protocols, covering packet assembly and parsing, CRC verification, transaction processing, and endpoint data routing.</li>
+        <li><strong><code>usb_desc</code> (Device Descriptor ROM)</strong>: Stores the device's enumeration descriptor information (declares VID: <code>0x33AA</code>, PID: <code>0x1800</code>), supporting dynamic switching of the configuration descriptor topology based on whether it is in DFU mode (<code>i_dfu_mode</code>).</li>
+        <li><strong><code>usb_ep_top</code> (Endpoint Manager)</strong>: Implements USB endpoint data routing. This project is configured as follows:
+            <ul>
+                <li><strong>EP0</strong>: Default control endpoint;</li>
+                <li><strong>EP1 (OUT)</strong>: UAC audio downstream Speaker endpoint (uses Audio dedicated buffer);</li>
+                <li><strong>EP2 (OUT / IN - <code>0x82</code>)</strong>: HID bidirectional interrupt endpoint (uses streaming FIFO buffer).</li>
+            </ul>
+        </li>
+        <li><strong><code>USB_EP0_ctrl</code> (USB Class-Specific Request Controller)</strong>: Parses Setup packets, intercepts and processes UAC class-specific requests (sampling rate setting, mute, volume adjustment, DoP/DSD mode enable), supports automatic recognition and parsing of DoP marker codes (<code>0x05</code>/<code>0xFA</code>) to control <code>dsd_en</code> and <code>dop_en</code> flags. Also intercepts and processes DFU class-specific download commands.</li>
+    </ul>
+
+    <div class="info-box">
+        <strong>Technical Support:</strong> For specific protocol timing diagrams related to underlying timing and interfaces, please refer to the "Gowin USB 2.0 SoftPHY IP User Guide" and "Gowin USB 2.0 Device Controller IP User Guide".
+    </div>
+
+    <h3>3.3 UAC Hi-Fi Audio Playback Subsystem (USB Audio Class Subsystem)</h3>
+    <p>This subsystem is responsible for receiving audio data sent down by USB Endpoint 1, completing protocol unpacking, and converting it into standard IIS or DSD signals:</p>
+    <ul>
+        <li><strong><code>IIS_CLK_GEN</code> (IIS Clock Generator)</strong>: Based on the current sampling rate and data bit width, generates <code>dac_bclk</code> and <code>dac_lrclk</code> in real time.</li>
+        <li><strong><code>audio_tx_usb2pcm</code> (Speaker 32-bit Parallel PCM Data Conversion)</strong>: Reassembles and converts the USB 8-bit parallel data stream into 32-bit parallel PCM data.</li>
+        <li><strong><code>audio_tx_pcm2iis</code> (Speaker IIS Serial Data Conversion)</strong>: Responsible for converting 32-bit parallel PCM audio data into standard IIS serial bus timing signals (BCLK, LRCK, DATA) and outputting them to the external audio DAC.</li>
+        <li><strong><code>audio_tx_pcm2dsd</code> (PCM/DoP to DSD Serial Conversion)</strong>: When DSD/DoP format enablement is detected, extracts the DSD source data stream and reconstructs it into standard dual-channel DSD serial timing (<code>DSD_CLK</code>, <code>DSD_DATA1</code>, <code>DSD_DATA2</code>) for output.</li>
+        <li><strong><code>speaker_feedback</code> (Asynchronous Feedback Module)</strong>: By measuring the number of cycles of the local audio clock (<code>xmclk</code>) relative to the USB Start of Frame signal (<code>usb_sof</code>), it dynamically calculates a 16.16 format feedback coefficient and sends it back to the host via EP81, ensuring precise matching between the host's transmission rate and the local consumption rate.</li>
+    </ul>
+
+    <h3>3.4 HID Subsystem</h3>
+    <ul>
+        <li><strong>Data Loopback Logic</strong>: Intercepts host data received by EP2 OUT (<code>ep2_rx_data</code>), directly latches it in the <code>PHY_CLKOUT</code> clock domain, and sends it to EP2 IN (<code>ep2_tx_data</code>) to implement data transmission verification.</li>
+    </ul>
+
+    <h3>3.5 DFU Background Upgrade Subsystem (DFU Subsystem)</h3>
+    <p>This subsystem implements a background online upgrade function based on the official USB DFU class.</p>
+    <ul>
+        <li><strong><code>USB_EP0_ctrl</code> (USB Class-Specific Request Register)</strong>: In addition to regular control requests, it is responsible for intercepting and parsing DFU class-specific requests (e.g., DFU_DNLOAD, DFU_GETSTATUS, etc.).</li>
+        <li><strong><code>spi_flash_controller</code> (SPI Flash Controller)</strong>: The logic internally contains an address offset routing mechanism: When the system is in DFU mode (<code>is_dfu_mode</code> is valid), the controller automatically directs the firmware data stream sent by the host computer to the <code>0x000000</code> (Working Image) region of the external Flash.</li>
+    </ul>
+
+    <h2>4. Parameter Description and Configuration Guide</h2>
+    <p>This project adopts a highly parameterized design. Users can quickly tailor system functions and storage capacity by modifying the <code>parameter</code> or internal constants of the top-level modules of each subsystem:</p>
+
+    <h3>4.1 Global Working Mode Macro Definitions (<code>audio_define.vh</code>)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Macro Definition Parameter</th>
+                <th>Functional Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>HIFI_ONLY</code></td>
+                <td>When this macro is defined, the EP2 module related to HID and DFU is disabled, retaining only the UAC Hi-Fi playback function.</td>
+            </tr>
+            <tr>
+                <td><code>HIFI_HID_DFU</code></td>
+                <td>When this macro is defined, it includes all composite functions: UAC Hi-Fi playback, HID loopback, and DFU upgrade functions.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.2 Endpoint and Interface Mapping Parameters (<code>usb_ep_top</code>)</h3>
+    <p>This module is responsible for coordinating the underlying hardware resources and data link routing of all endpoints. The system uses a flexible parameterized mapping mechanism. By configuring the following mapping tables independently, specific business scenarios and the most suitable buffer architectures can be dynamically assigned to different Endpoint Numbers.</p>
+    
+    <p><strong>Mode Definition Description:</strong></p>
+    <ul>
+        <li><code>0</code>: DISABLE (Endpoint disabled)</li>
+        <li><code>1</code>: UMS (Uses Ping-Pong RAM, suitable for high-throughput packet data interaction)</li>
+        <li><code>2</code>: CDC (Uses pure FIFO, suitable for low-latency UART streaming passthrough)</li>
+        <li><code>3</code>: UAC (Uses dedicated Audio buffering mechanism, suitable for isochronous audio streams)</li>
+    </ul>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Parameter Name</th>
+                <th>Current Configuration Value</th>
+                <th>Functional Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>EP_OUT_MODE</code></td>
+                <td><code>'{ 1:3, 2:2, default:0 }</code></td>
+                <td><strong>OUT Endpoint Mode Mapping Table</strong>.<br>Defines the downstream data stream business from the host to the device. Current configuration:<br>• <strong>EP1</strong>: Mode 3 (UAC downstream, serves the Speaker)<br>• <strong>EP2</strong>: Mode 2 (HID OUT, serves HID reception)</td>
+            </tr>
+            <tr>
+                <td><code>EP_IN_MODE</code></td>
+                <td><code>'{ 1:0, 2:2, default:0 }</code></td>
+                <td><strong>IN Endpoint Mode Mapping Table</strong>.<br>Defines the upstream data stream business from the device to the host. Current configuration:<br>• <strong>EP2</strong>: Mode 2 (HID upstream, serves HID transmission)</td>
+            </tr>
+            <tr>
+                <td><code>EP_UAC_INTF</code></td>
+                <td><code>'{ 1:1, default:0 }</code></td>
+                <td><strong>UAC Interface Binding Mapping Table</strong>.<br>Dedicated to UAC mode, binds audio endpoints to specific USB Audio Interfaces to correctly parse class-specific requests issued by the host. Current configuration:<br>• <strong>EP1</strong> Bound to Interface 1</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>4.3 Device Descriptor and Identification Parameters (<code>usb_desc</code>)</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>Parameter Name</th>
+                <th>Default Value</th>
+                <th>Functional Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><code>VENDORID</code></td>
+                <td><code>16'h33AA</code></td>
+                <td>Vendor ID (VID)</td>
+            </tr>
+            <tr>
+                <td><code>PRODUCTID</code></td>
+                <td><code>16'h1800</code></td>
+                <td>Product ID (PID)</td>
+            </tr>
+            <tr>
+                <td><code>VERSIONBCD</code></td>
+                <td><code>16'h0100</code></td>
+                <td>Product Firmware Version (BCD format, here representing V1.00)</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div style="page-break-after: always;"></div>
+
+    <h2>5. Functional Testing - UAC HIFI Playback</h2>
+    
+    <h3>5.1 Driver Installation and Test Software Preparation</h3>
+    <ul>
+        <li><strong>Audio playback test software</strong>: Foobar2000 or REW (Room EQ Wizard).</li>
+        <li><strong>Audio drivers</strong>: Windows/MacOS native drivers, exclusive ASIO drivers supporting DSD.</li>
+        <li><strong>Hardware wiring</strong>: Connect a logic analyzer or oscilloscope to the <code>IIS_BCLK_O</code>, <code>IIS_LRCK_O</code>, <code>IIS_DATA1_O</code> and <code>DSD_CLK_O</code>, <code>DSD_DATA1_O</code>, <code>DSD_DATA2_O</code> test pins of the development board. An external DAC decoding board can also be connected.</li>
+    </ul>
+
+    <div class="img-container">
+        <img src="./picture/GPIO.jpg" alt="GPIO" style="display: block; margin: 30px auto; width: 70%; height: auto; max-width: 100%;">
+    </div>
+
+    <h3>5.2 Audio Playback and IIS/DSD Signal Verification</h3>
+    <ol>
+        <li><strong>Device Identification and Sampling Rate Setting</strong>:
+            <ul>
+                <li>Connect the development board's USB to the computer. In the Windows "Sound Control Panel", a newly added audio output device <strong>USB Audio Device</strong> (VID: <code>33AA</code>, PID: <code>1800</code>) can be observed.</li>
+                <li>Go to "Device Properties -&gt; Advanced" to freely switch sampling rates (e.g., 24-bit/48kHz, 24-bit/96kHz, 32-bit/192kHz, etc.).</li>
+            </ul>
+        </li>
+        <li><strong>PCM Audio Playback Test</strong>:
+            <ul>
+                <li>Use Foobar2000 or REW to play a standard PCM 1kHz sine wave audio file.</li>
+                <li>Use an oscilloscope/logic analyzer to observe <code>IIS_BCLK_O</code>, <code>IIS_LRCK_O</code>, and <code>IIS_DATA1_O</code>. Confirm that the <code>LRCK</code> frequency strictly equals the set sampling rate (e.g., 48kHz), the <code>BCLK</code> frequency corresponds to the bit clock, and the data line normally outputs 32-bit wide PCM sine wave data packets.</li>
+            </ul>
+        </li>
+        <li><strong>DoP / DSD Audio Playback Test</strong>:
+            <ul>
+                <li>Configure the DSD playback plugin (e.g., <code>foo_input_sacd</code>) in Foobar2000, setting the output mode to <strong>DSD over PCM (DoP)</strong>.</li>
+                <li>Play DSD64 / DSD128 test tracks.</li>
+                <li>Observe the top-level hardware output: The logic will automatically recognize the DoP marker header (<code>0x05</code> / <code>0xFA</code>) and assert <code>dop_en</code> / <code>dsd_en</code>. At this time, the PCM/IIS output switches to silence/mute, and the physical pins <code>DSD_CLK_O</code> and <code>DSD_DATA1_O/DATA2_O</code> begin to correctly output the high-frequency DSD bitstream.</li>
+            </ul>
+        </li>
+    </ol>
+
+    <p><strong>High Sampling Rate and Special Format Playback Test Instructions</strong></p>
+    <ol>
+        <li><strong>High Sampling Rate Test Recommendation (705.6kHz / 768kHz)</strong><br>
+        Under the native USB audio drivers of the Windows system, regular players only support sampling rates up to 192kHz. To verify playback functions for ultra-high sampling rates like 705.6kHz or 768kHz, it is recommended to connect the device to a <strong>macOS</strong> system or a smartphone for testing, as their native drivers directly support higher sampling rate outputs.</li>
+        <li><strong>DoP / DSD Audio Protocol Test (Hiby Music recommended)</strong><br>
+        Because outputting DoP or native DSD protocol audio on a PC usually requires exclusive drivers bound to specific device models (like ASIO drivers), to simplify the testing process, we recommend using a smartphone with the <strong>"Hiby Music" APP</strong>. This software bypasses VID/PID restrictions, plays .dff files via USB exclusive mode, and directly outputs compliant DSD/DoP audio data streams.</li>
+    </ol>
+
+    <p><strong>Hiby Music APP Configuration Steps (refer to the figures below):</strong></p>
+    <ul>
+        <li><strong>Step 1</strong>: Open the APP, tap on the left to expand the user sidebar, and enter <strong>"Settings"</strong>.</li>
+        <li><strong>Step 2</strong>: In the USB audio-related options, check to enable <strong>"Hiby Music Exclusive USB Output"</strong>.</li>
+        <li><strong>Step 3</strong>: Click <strong>"DSD Mode"</strong>, and based on current test requirements, select the desired output audio format (<strong>PCM / DoP / Native</strong>).</li>
+    </ul>
+
+    <table class="no-border-table" style="width: 100%; text-align: center;">
+        <tr>
+            <td style="width: 50%;"><img src="./picture/And_dsd1.jpg" alt="Picture 1" style="max-width: 70%;"></td>
+            <td style="width: 50%;"><img src="./picture/And_dsd2.jpg" alt="Picture 2" style="max-width: 70%;"></td>
+        </tr>
+        <tr>
+            <td>Figure 1: Step 1 Diagram</td>
+            <td>Figure 2: Step 2 Diagram</td>
+        </tr>
+    </table>
+
+    <h2>6. Functional Testing - HID Loopback Test</h2>
+    <p>The HID subsystem is configured as an interrupt endpoint (Endpoint 2), implementing pure logical latched data loopback internally in the FPGA.</p>
+
+    <h3>6.1 Test Environment Configuration</h3>
+    <ul>
+        <li><strong>Test Tool</strong>: Open the <strong>HID+DFU Testing Software.exe</strong> in the accompanying tools folder.</li>
+        <li><strong>Interface Identification</strong>: Confirm whether the VID/PID/interface in the device configuration is identical to the design (default is <code>33AA:1800:2</code>), click "Apply and Find". If "Device Status: Connected" is displayed, the device is successfully linked.</li>
+    </ul>
+
+    <h3>6.2 Data Transmission/Reception and Loopback Verification</h3>
+    <p>This software includes three simple loopback tests.</p>
+    <ol>
+        <li><strong>Basic Incremental Test</strong><br>
+        Verifies the basic data transmission/reception connectivity between the host and the HID device. Sends a 16-byte incremental sequence payload (e.g., <code>[0, 1, 2, ..., 15]</code>) and waits for the device to return it identically to ensure smooth basic communication.</li>
+        <li><strong>Boundary Value Test</strong><br>
+        Verifies the device's correctness when processing special or extreme bit pattern data, troubleshooting data bit flips or parsing errors. The test sends the following four representative 16-byte sequences for comparison:
+            <ul>
+                <li>All <code>0x00</code></li>
+                <li>All <code>0xFF</code></li>
+                <li>Alternating <code>0x55</code> (binary 01010101)</li>
+                <li>Alternating <code>0xAA</code> (binary 10101010)</li>
+            </ul>
+        </li>
+        <li><strong>100-Iteration Stress Test</strong><br>
+        Evaluates the stability of the device under high-frequency continuous communication. Loops and continuously sends 100 sets of randomly generated 16-byte data with strict read timeout limits, checking for occasional packet loss, timing chaos, or verification errors, expecting a 100% success rate.</li>
+    </ol>
+
+    <div class="img-container">
+        <img src="./picture/hid_test_en.png" alt="HID Test" style="display: block; margin: 30px auto; width: 60%; height: auto; max-width: 100%;">
+    </div>
+   
+    <h2>7. Functional Testing - DFU Background Upgrade</h2>
+    <p>This system adopts a Multi-Boot architecture. To implement safe remote upgrades and data isolation, the physical addresses of the external GD25Q64ESIG SPI Flash (8MB) are mapped as follows:</p>
+    <ul>
+        <li><code>0x000000</code>: Working Image, the default download and erase/write target address for the DFU protocol.</li>
+        <li><code>0x100000</code>: Golden Image, the factory-programmed security backup area. This address is customizable.</li>
+    </ul>
+
+    <h3>7.1 FPGA Chip Configuration Parameter Preset</h3>
+    
+    <div class="warning-box">
+        <strong>⚠️ Hardware Operation Warning:</strong><br>
+        The <strong>Golden Boot Address</strong> and <strong>AES Decryption Key</strong> in the following configuration parameters are based on the underlying eFuse mechanism, which has an <strong>irreversible one-way write limit</strong> (once a bit is changed from <code>0</code> to <code>1</code>, it can never be recovered). Please double-check before operating!<br>
+        In addition, before performing such parameter write operations, <strong>a stable 1.8V power supply must be provided to the VQPS pin of the development board</strong> before subsequent soft configuration writes can proceed; otherwise, the operation will fail.
+    </div>
+
+    <div class="img-container">
+        <img src="./picture/board.jpg" alt="Board" style="max-width: 50%; margin: 10px auto;">
+    </div>
+    <div class="img-container">
+        <img src="./picture/vefuse.png" alt="eFuse" style="max-width: 60%; margin: 10px auto;">
+    </div>
+
+    <p><strong>Golden Boot Address Setting:</strong></p>
+    <ol>
+        <li>Open the Programmer, select the current device, right-click and select the <strong>"MSPI 2nd Boot Address"</strong> option to enter the configuration page.</li>
+        <li>Click "Read" to read the currently configured boot address. It shows <code>0x800_000</code>, but the actual default address is <code>0x000_000</code>.</li>
+        <li>Enter the target boot address in the input box (for this project, it should be changed to <code>0x100_000</code>), and click the "Write" button. If it prompts "Write Success", the write is successful.</li>
+        <li>Click "Read" again to confirm the displayed address matches the written value to ensure the configuration has taken effect.</li>
+    </ol>
+
+    <div class="img-container">
+        <img src="./picture/mspi_2nd_ad.png" alt="MSPI" style="max-width: 50%; margin: 10px auto;">
+    </div>
+
+    <p><strong>AES Key Setting:</strong></p>
+    <p>The Arora V family of FPGA products supports bitstream data encryption using a 128-bit AES encryption algorithm. Users can add an AES key during compilation. Upon power-up, the device will identify encrypted bitstreams containing preset AES keys and unencrypted bitstreams, and automatically skip encrypted bitstreams with mismatched AES keys.</p>
+    <ol>
+        <li><strong>Input Encryption Key</strong>: Select "Project - Configuration" from the menu bar, click "BitStream", check "Enable Encryption" and enter the key value as shown below. During subsequent compilations, Gowin EDA will automatically embed this key information into the bitstream file.</li>
+    </ol>
+
+    <div class="img-container">
+        <img src="./picture/cfg_key.png" alt="Config Key" style="max-width: 50%; margin: 10px auto;">
+    </div>
+
+    <ol start="2">
+        <li><strong>Set Decryption Key</strong>: Open the Programmer, select the current device, right-click and select the "Security Key Setting" option. Enter the encrypted key value in the pop-up interface, and click "Write" to program it into the FPGA. As shown below:</li>
+    </ol>
+
+    <div class="img-container">
+        <img src="./picture/key.png" alt="Key Setting" style="max-width: 60%; margin: 10px auto;">
+    </div>
+
+    <p><em>For more specific instructions, refer to the "UG714-Arora V 25K FPGA Products Programming and Configuration Guide" —— 4.3 Security</em></p>
+
+    <h3>7.2 Golden Image and Working Image Preset</h3>
+    <p>To ensure the anti-brick mechanism can intervene normally, before delivery or initial testing, a stable version of the <code>golden_DFU_V1.0.fs</code> firmware must be burned to the golden address via a hardware downloader.</p>
+    <ol>
+        <li>Open Gowin Programmer and set the Access Mode to <code>External Flash Mode Arora V</code>.</li>
+        <li>In advanced settings, manually change the programming Start Address to <code>0x100000</code>.</li>
+        <li>Select the pre-compiled Golden Image (DFU file only) bitstream file and execute programming.</li>
+        <li>In advanced settings, manually change the programming Start Address to <code>0x000000</code>.</li>
+        <li>Select the pre-compiled Working Image (including UAC + HID + DFU) bitstream file and execute programming.</li>
+    </ol>
+
+    <h3>7.3 Environment Configuration and Driver Installation</h3>
+    <p>By default, Windows systems may not properly load the DFU interface driver, requiring configuration using the Zadig tool. A driver-free version of the DFU remote upgrade demo will be released in the future.</p>
+    <ol>
+        <li><strong>Connect the device</strong>: Connect the FPGA development board to the computer via a USB data cable, right-click and run Zadig as administrator.</li>
+        <li><strong>Enumerate devices</strong>: Click <code>Options</code> → <code>List All Devices</code> in the top menu bar sequentially to ensure the tool can read all current physical USB devices.</li>
+        <li><strong>Select target hardware</strong>: Select your DFU device from the drop-down list on the main interface (the identifier defaults to <strong>DFU Runtime(interface 0/3)</strong>). Be sure to verify the device name to avoid misoperation.</li>
+        <li><strong>Specify driver protocol</strong>: In the Target driver selection box on the right, use the arrows to toggle and select <strong>WinUSB(v6.x.xxxx)</strong>.</li>
+    </ol>
+
+    <div class="img-container">
+        <img src="./picture/zadig_dfu.png" alt="Zadig" style="max-width: 60%; margin: 10px auto;">
+    </div>
+
+    <h3>7.4 Using dfu-util to Execute Upgrade Test</h3>
+    <p>This section mainly verifies the function of writing new firmware to the external SPI Flash of the development board via the DFU (Device Firmware Upgrade) interface. Two alternative test methods are provided: using the accompanying graphical software, or using the open-source command-line tool <code>dfu-util</code>.</p>
+
+    <h4>7.4.1 Method 1: Using the Graphical User Interface (GUI) Tool for Upgrade</h4>
+    <p>This test uses the <strong>HID+DFU Testing Software.exe</strong> in the accompanying tools folder to write new firmware to the development board.</p>
+
+    <p><strong>Test Environment and Precautions</strong></p>
+    <ul>
+        <li><strong>Environment dependencies</strong>: Ensure that the testing software is in the same folder as <code>dfu-util.exe</code> and <code>libusb-1.0.dll</code>, or that the path to <code>dfu-util</code> has been successfully added to the system's environment variables, otherwise the download function cannot be invoked.</li>
+        <li><strong>Connection status</strong>: When performing DFU upgrade testing, the VID/PID on the software interface and the current "Device Connection Status" do not require special attention.</li>
+    </ul>
+
+    <p><strong>Upgrade Operation Steps</strong></p>
+    <ol>
+        <li><strong>Select Firmware</strong>: Click the "<strong>Select Firmware File</strong>" button and choose the <code>.bin</code> firmware file you wish to download in the pop-up window.</li>
+        <li><strong>Enter DFU Mode</strong>: Click the "<strong>Execute Detach</strong>" button to trigger the device to switch to DFU mode.</li>
+        <li><strong>Download Firmware</strong>: Click the "<strong>Execute Download</strong>" button, and the software will begin downloading the <code>.bin</code> file to the development board's <code>spi_flash</code>. The output window below will display the actual download progress in real-time.</li>
+        <li><strong>Reboot to Apply</strong>: After the download progress is complete, <strong>repower</strong> the development board (disconnect and reconnect), and the device will load and run the newly programmed firmware.</li>
+    </ol>
+
+    <div class="img-container">
+        <img src="./picture/dfu_test_en.png" alt="DFU Test" style="max-width: 50%; margin: 10px auto;">
+    </div>
+
+    <p><strong>Test Firmware Description</strong></p>
+    <p>The attached <code>DFU_bin</code> folder provides the following firmware for testing:</p>
+    <ul>
+        <li><code>5A25_HIFI+HID+DFU_V1.0.bin</code> — The complete firmware for this project, including UAC-HIFI, HID, and DFU functions.</li>
+        <li><code>5A25_HIFIonly_V1.0.bin</code> — The trimmed firmware for this project, <strong>containing ONLY</strong> the UAC-HIFI function.</li>
+        <li><code>mode_2CN_V1.4.0.bin</code> — Test firmware, includes the DFU function.</li>
+        <li><code>mode_8CN_V1.4.0.bin</code> — Test firmware, includes the DFU function.</li>
+    </ul>
+
+    <div class="warning-box">
+        <strong>⚠️ Important Note:</strong><br>
+        Except for <code>5A25_HIFIonly_V1.0.bin</code>, the other three firmwares retain the DFU upgrade function. This means after burning these three firmwares and repowering, you can still use the software for subsequent firmware burns. If the <code>HIFIonly</code> firmware is burned, the device will no longer respond to subsequent DFU upgrade requests after repowering.
+    </div>
+
+    <h4>7.4.2 Method 2: Using the dfu-util Command Line for Upgrade</h4>
+    <p>You can also use the cross-platform open-source command-line tool <code>dfu-util</code> for testing. Ensure that <code>dfu-util</code> has been added to the system's environment variables.</p>
+
+    <p><strong>Step 1: Prepare the Firmware Bitstream File</strong></p>
+    <p>In the project synthesis tool, right-click to open Configuration —— BitStream —— General —— Bitstream Format, and select <strong>Binary</strong>. After compilation, the software generates the corresponding <code>.fs</code>, <code>.bin</code>, and <code>.binx</code> firmware files in the <code>pnr</code> folder. Prepare the <code>.bin</code> file to be updated (e.g., named <code>update_v2.bin</code>).</p>
+
+    <div class="img-container">
+        <img src="./picture/bin.png" alt="Bin File" style="max-width: 60%; margin: 10px auto;">
+    </div>
+
+    <p><strong>Step 2: Enumerate and Identify the Device</strong></p>
+    <p>Open a command-line terminal (CMD / PowerShell) and enter the following command to check if the device is correctly identified:</p>
+    <pre><code>dfu-util -l</code></pre>
+    <p>If the driver is normal, the terminal will list the devices currently supporting DFU and display their corresponding VID and PID (e.g., <code>33AA:1800</code>).</p>
+
+    <p><strong>Step 3: Issue New Firmware</strong></p>
+    <p>Execute the following command in the terminal to trigger the device to switch from APP mode to DFU download mode:</p>
+    <pre><code>dfu-util -e</code></pre>
+    <p>Then, execute the following command to initiate the download:</p>
+    <pre><code>dfu-util -d 33AA:1800 -a 0 -D update_v2.bin</code></pre>
+    
+    <p><strong>Parameter Description:</strong></p>
+    <ul>
+        <li><code>-d 33AA:1800</code>: Specifies the VID:PID of the target device.</li>
+        <li><code>-a 0</code>: Specifies the update target as Alt Setting 0. The underlying logic automatically maps it to the <code>0x000000</code> address of the Flash.</li>
+        <li><code>-D</code>: The command is Download (downloads the specified firmware to the device).</li>
+    </ul>
+
+    <div class="img-container">
+        <img src="./picture/cmd.png" alt="CMD" style="max-width: 50%; margin: 10px auto;">
+    </div>
+
+    <p><strong>Step 4: Background Upgrade Monitoring and Status Description</strong></p>
+    <p>After executing the download command, a download progress bar appears in the terminal. At this point, the USB controller receives the data stream and drives the SPI Flash controller to execute erase/write operations on the <code>0x000000</code> area.</p>
+    
+    <div class="info-box">
+        <strong>💡 Composite Function Concurrency Note:</strong><br>
+        When the device enters DFU mode, it is treated by the system as a pure DFU device and temporarily loses its original UAC and HID functions. Upon completion of the DFU download (progress reaches 100% and prompts "Done"), the device automatically reverts to APP mode, at which point the UAC and HID functions can be re-tested. But please note, the old logic is still running at this time; the FPGA will only actually load the new firmware from <code>0x000000</code> upon the next power cycle.
+    </div>
+
+    <p><strong>Step 5: Reset and Multi-Boot Verification (Anti-Brick Test)</strong></p>
+    <ol>
+        <li><strong>Normal Boot Verification</strong>: Confirm the download is complete, power off and repower on, and observe whether the system runs normally according to the new version's firmware logic.</li>
+        <li><strong>Anti-Brick Fallback Verification (Destructive Test)</strong>: You can attempt to download a bin bitstream file with a mismatched AES key or one that is corrupted to simulate an extreme firmware corruption scenario. Upon repowering, when the Arora-V chip fails to verify <code>0x000000</code>, it automatically triggers the multi-boot mechanism, falling back to load the Golden Image located at the <code>0x100000</code> backup address. Once the system successfully boots relying on the Golden Image, you can reuse DFU to overwrite and download the correct bitstream file to the <code>0x000000</code> address, thereby verifying the device's self-recovery capability.</li>
+    </ol>
+
+</body>
+</html>
